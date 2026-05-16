@@ -22,16 +22,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { BookReview } from "@/interface/book";
+import type { BookReview, BookComment } from "@/interface/book";
 import { addBook, updateBook, deleteBook } from '@/app/admin/actions'
 import BookFormModal from "./BookFormModal";
+import BookCommentCount from "./BookCommentCount";
+import NotificationCenter from "@/components/Admin/NotificationCenterSimple";
 
 
-const Dashboard = ( { tabela }: { tabela: BookReview[] } ) => {
+const Dashboard = ( { tabela, unreadComments }: { tabela: BookReview[], unreadComments: BookComment[] } ) => {
   
   const [formOpen, setFormOpen] = useState(false)
   const [editingBook, setEditingBook] = useState<BookReview | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+  const [commentsRefreshKey, setCommentsRefreshKey] = useState(0)
 
   const handleEdit = (book: BookReview) => {
     setEditingBook(book)
@@ -50,6 +53,8 @@ const Dashboard = ( { tabela }: { tabela: BookReview[] } ) => {
       await addBook(data)
     }
     setFormOpen(false)
+    // Força refresh da contagem de comentários
+    setCommentsRefreshKey(prev => prev + 1)
   }
 
   const confirmDelete = async () => {
@@ -68,7 +73,7 @@ const Dashboard = ( { tabela }: { tabela: BookReview[] } ) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row gap-5 justify-between">
             <div>
               <h1 className="font-display text-3xl font-bold text-foreground">
                 Painel de administraçao
@@ -77,10 +82,15 @@ const Dashboard = ( { tabela }: { tabela: BookReview[] } ) => {
                 Gere as tuas recomendações de livros
               </p>
             </div>
-            <Button onClick={handleAdd} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Livro
-            </Button>
+
+            <div className="flex items-center gap-2">
+              <NotificationCenter initialUnreadComments={unreadComments} />
+              
+              <Button onClick={handleAdd} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Novo Livro
+              </Button>
+            </div>
           </div>
 
           <div className="mt-8 rounded-lg border border-border bg-card">
@@ -90,8 +100,9 @@ const Dashboard = ( { tabela }: { tabela: BookReview[] } ) => {
                   <TableHead>Título</TableHead>
                   <TableHead className="hidden sm:table-cell">Autor(a)</TableHead>
                   <TableHead className="hidden md:table-cell">Género</TableHead>
-                  <TableHead>Avaliação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-center">Avaliação</TableHead>
+                  <TableHead className="text-center">Comentários</TableHead>
+                  <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,14 +117,19 @@ const Dashboard = ( { tabela }: { tabela: BookReview[] } ) => {
                         {book.genre}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <Star className="h-3.5 w-3.5 fill-[hsl(var(--star-filled))] text-[hsl(var(--star-filled))]" />
                         <span className="text-sm">{book.rating}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <BookCommentCount bookId={book.id} refreshKey={commentsRefreshKey} />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -135,7 +151,7 @@ const Dashboard = ( { tabela }: { tabela: BookReview[] } ) => {
                 ))}
                 {tabela.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
                       Ainda não há livros. Adiciona o primeiro!
                     </TableCell>
                   </TableRow>
@@ -152,7 +168,8 @@ const Dashboard = ( { tabela }: { tabela: BookReview[] } ) => {
         onOpenChange={setFormOpen}
         book={editingBook}
         onSubmit={handleSubmit}
-      />    
+        onCommentDeleted={() => setCommentsRefreshKey(prev => prev + 1)}
+      />
       
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
