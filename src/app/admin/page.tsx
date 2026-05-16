@@ -2,7 +2,8 @@ import Footer from "@/app/layout/Footer";
 import Navbar from "../layout/NavBar";
 import { createClient } from '@/lib/supabase/server'
 import { BookReview, BookComment } from "@/interface/book";
-import Table from "@/components/Admin/Table";
+import { Post } from "@/interface/post";
+import AdminTabs from "@/components/Admin/AdminTabs";
 import { getUnreadComments } from "./actions";
 
 
@@ -18,16 +19,31 @@ async function getBooks() : Promise<BookReview[]> {
   return data ?? []
 }
 
+async function getPosts(): Promise<Post[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .order('publishedAt', { ascending: false })
+
+  if (error) console.error(error)
+  return data ?? []
+}
+
 
 export default async function AdminPage() {
-  const tabela = await getBooks();
-  const unreadComments = await getUnreadComments();
+  const [books, unreadComments, posts] = await Promise.all([
+    getBooks(),
+    getUnreadComments(),
+    getPosts(),
+  ]);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <Table tabela={tabela} unreadComments={unreadComments} />
+      <AdminTabs books={books} unreadComments={unreadComments} posts={posts} />
 
       <Footer />
     </div>

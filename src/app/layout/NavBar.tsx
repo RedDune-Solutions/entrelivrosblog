@@ -6,6 +6,7 @@ import Image from "next/image";
 
 const navLinks = [
   { label: "Início", path: "/" },
+  { label: "Publicações", path: "/posts" },
   { label: "Sobre Mim", path: "/aboutMe" },
 ];
 
