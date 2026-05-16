@@ -55,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Analytics/>
         <SpeedInsights/>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );}
