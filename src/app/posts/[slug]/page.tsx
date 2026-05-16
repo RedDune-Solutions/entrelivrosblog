@@ -55,12 +55,6 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export async function generateStaticParams() {
-  const supabase = await createClient();
-  const { data } = await supabase.from("posts").select("slug").eq("published", true);
-  return (data ?? []).map((r) => ({ slug: r.slug as string }));
-}
-
 export default async function PostPage({ params }: PageProps) {
   const { slug } = await params;
   const result = await getPost(slug);
