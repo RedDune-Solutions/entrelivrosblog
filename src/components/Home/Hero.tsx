@@ -13,6 +13,9 @@ const Hero = () => {
           src={heroImage}
           alt="Hero Image"
           className="h-full w-full object-cover"
+          priority
+          placeholder="blur"
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-foreground/60" />
       </div>
@@ -31,7 +34,7 @@ const Hero = () => {
             height={300}
 
           />
-          <p className="mt-4 font-body text-lg text-primary-foreground/80">
+          <p className="mt-4 font-body text-lg text-primary-foreground/80 text-justify">
             Recomendações e opiniões de livros para apaixonados por leitura. <br />Descobre novas histórias e autores através das minhas leituras.
           </p>
         </motion.div>
