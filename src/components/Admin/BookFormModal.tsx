@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { BookReview } from "@/interface/book";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   Select,
@@ -27,7 +27,7 @@ interface BookFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   book?: BookReview | null;
-  onSubmit: (data: Omit<BookReview, "id">) => void;
+  onSubmit: (data: Omit<BookReview, "id">) => void | Promise<void>;
   onCommentDeleted?: () => void;
 }
 
@@ -69,6 +69,8 @@ const BookFormModal = ({ open, onOpenChange, book, onSubmit, onCommentDeleted }:
 
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -111,6 +113,7 @@ const BookFormModal = ({ open, onOpenChange, book, onSubmit, onCommentDeleted }:
     let bookCoverUrl = form.bookCoverUrl;
 
     if (coverFile) {
+      setUploading(true);
       const supabase = createClient();
 
       // Sanitize filename to avoid issues with special characters on supabase storage
@@ -127,6 +130,7 @@ const BookFormModal = ({ open, onOpenChange, book, onSubmit, onCommentDeleted }:
 
       if (error) {
         console.error('Erro ao fazer upload:', error);
+        setUploading(false);
         return;
       }
 
@@ -136,15 +140,20 @@ const BookFormModal = ({ open, onOpenChange, book, onSubmit, onCommentDeleted }:
 
       bookCoverUrl = data.publicUrl;
       console.log('bookCoverUrl gerado:', bookCoverUrl)
+      setUploading(false);
     }
-  
-    onSubmit({
-      ...form,
-      reviewDate: book?.reviewDate || new Date().toISOString(),
-      bookCoverUrl,
-    });
 
-    onOpenChange(false);
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        ...form,
+        reviewDate: book?.reviewDate || new Date().toISOString(),
+        bookCoverUrl,
+      });
+      onOpenChange(false);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const set = (key: string, value: unknown) =>
@@ -272,11 +281,15 @@ const BookFormModal = ({ open, onOpenChange, book, onSubmit, onCommentDeleted }:
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={uploading || submitting}>
               Cancelar
             </Button>
-            <Button type="submit">
-              {book ? "Guardar" : "Adicionar"}
+            <Button type="submit" disabled={uploading || submitting}>
+              {uploading ? (
+                <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />A carregar imagem...</span>
+              ) : submitting ? (
+                <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />A guardar...</span>
+              ) : book ? "Guardar" : "Adicionar"}
             </Button>
           </div>
         </form>

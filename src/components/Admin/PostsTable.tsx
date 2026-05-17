@@ -72,11 +72,21 @@ const PostsTable = ({ posts, books }: PostsTableProps) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="flex justify-end mb-4">
-        <Button onClick={handleAdd} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Publicação
-        </Button>
+      <div className="flex flex-col md:flex-row gap-5 justify-between mb-8">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground">
+            Publicações
+          </h1>
+          <p className="mt-1 font-body text-sm text-muted-foreground">
+            Gere as tuas publicações e posts
+          </p>
+        </div>
+        <div className="flex items-center">
+          <Button onClick={handleAdd} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nova Publicação
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border border-border bg-card">

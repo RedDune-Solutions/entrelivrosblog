@@ -33,7 +33,7 @@ async function getLatestPosts(): Promise<PostWithBook[]> {
     .select('*')
     .eq('published', true)
     .order('publishedAt', { ascending: false })
-    .limit(3)
+    .limit(10)
 
   if (error) {
     console.error('Failed to fetch posts:', error)
@@ -87,8 +87,14 @@ const Home = async () => {
               posts.length > 0 ? "max-w-7xl xl:grid-cols-[3fr_1fr]" : "max-w-5xl"
             }`}
           >
-            <Recomendations livros={livros} categories={categories} />
-            {posts.length > 0 && <LatestPosts posts={posts} />}
+            {posts.length > 0 && (
+              <div className="xl:order-2">
+                <LatestPosts posts={posts} />
+              </div>
+            )}
+            <div className="xl:order-1 min-w-0">
+              <Recomendations livros={livros} categories={categories} />
+            </div>
           </div>
         )}
 

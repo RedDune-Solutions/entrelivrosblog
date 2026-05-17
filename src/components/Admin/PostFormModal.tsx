@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import type { Post, PostInput } from "@/interface/post";
 import type { BookReview } from "@/interface/book";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 interface PostFormModalProps {
@@ -30,7 +30,7 @@ interface PostFormModalProps {
   onOpenChange: (open: boolean) => void;
   post?: Post | null;
   books: Pick<BookReview, "id" | "title">[];
-  onSubmit: (data: Omit<PostInput, "slug" | "publishedAt"> & { publishedAt?: string }) => void;
+  onSubmit: (data: Omit<PostInput, "slug" | "publishedAt"> & { publishedAt?: string }) => void | Promise<void>;
 }
 
 const NO_BOOK = "__none__";
@@ -58,6 +58,7 @@ const PostFormModal = ({ open, onOpenChange, post, books, onSubmit }: PostFormMo
   const [coverPreview, setCoverPreview] = useState<string | null>(post?.coverImageUrl ?? null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -102,15 +103,20 @@ const PostFormModal = ({ open, onOpenChange, post, books, onSubmit }: PostFormMo
       setUploading(false);
     }
 
-    onSubmit({
-      title: form.title,
-      excerpt: form.excerpt || null,
-      body: form.body,
-      coverImageUrl: coverImageUrl || null,
-      bookId: form.bookId,
-      published: form.published,
-    });
-    onOpenChange(false);
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        title: form.title,
+        excerpt: form.excerpt || null,
+        body: form.body,
+        coverImageUrl: coverImageUrl || null,
+        bookId: form.bookId,
+        published: form.published,
+      });
+      onOpenChange(false);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -225,11 +231,15 @@ const PostFormModal = ({ open, onOpenChange, post, books, onSubmit }: PostFormMo
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={uploading || submitting}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={uploading}>
-              {uploading ? "A carregar..." : post ? "Guardar" : "Criar"}
+            <Button type="submit" disabled={uploading || submitting}>
+              {uploading ? (
+                <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />A carregar imagem...</span>
+              ) : submitting ? (
+                <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />A guardar...</span>
+              ) : post ? "Guardar" : "Criar"}
             </Button>
           </div>
         </form>

@@ -76,7 +76,7 @@ const Dashboard = ( { tabela, unreadComments }: { tabela: BookReview[], unreadCo
           <div className="flex flex-col md:flex-row gap-5 justify-between">
             <div>
               <h1 className="font-display text-3xl font-bold text-foreground">
-                Painel de administraçao
+                Reviews
               </h1>
               <p className="mt-1 font-body text-sm text-muted-foreground">
                 Gere as tuas recomendações de livros
