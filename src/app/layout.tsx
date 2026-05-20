@@ -25,6 +25,13 @@ export const metadata: Metadata = {
   description:
     "Site de recomendacoes literarias de Tatiana Felicio. Descobre novas leituras, opinioes honestas e o amor pelos livros.",
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/logo.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+  },
   openGraph: {
     title: "Entre Livros - Tatiana Felicio",
     description:
