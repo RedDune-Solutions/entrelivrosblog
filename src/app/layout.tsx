@@ -27,8 +27,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/logo.svg", type: "image/svg+xml" },
     ],
+    shortcut: "/favicon.ico",
   },
   openGraph: {
     title: "Entre Livros - Tatiana Felicio",
