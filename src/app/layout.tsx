@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/app/providers";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import BackToTopButton from "@/components/BackToTopButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,7 +62,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <Analytics/>
         <SpeedInsights/>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <BackToTopButton />
+        </Providers>
       </body>
     </html>
   );}
