@@ -41,7 +41,7 @@ const AdminTabs = ({
     }`;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6">
+    <div className="mx-auto min-h-[70vh] max-w-5xl px-4 pt-8 pb-24 sm:px-6">
       <div className="inline-flex flex-wrap gap-1 rounded-lg border border-border bg-card p-1">
         <button type="button" onClick={() => setTab("reviews")} className={tabClass("reviews")}>
           Reviews
