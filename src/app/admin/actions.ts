@@ -3,18 +3,34 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { BookReview, BookComment } from '@/interface/book'
+import type { NewsletterSubscriber } from '@/interface/newsletter'
+import type { Suggestion } from '@/interface/suggestion'
+import { notifyNewContent } from '@/lib/email/notify'
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.entrelivrosblog.pt'
 
 export async function addBook(data: Omit<BookReview, 'id' | 'reviewDate'>) {
   const supabase = await createClient()
-  
-  const { error } = await supabase
+
+  const { data: inserted, error } = await supabase
     .from('BookReview')
     .insert(data)
+    .select('id')
+    .single()
 
   if (error) return { error: error.message }
- 
+
   revalidatePath('/admin')
   revalidatePath('/')
+
+  if (inserted) {
+    await notifyNewContent({
+      table: 'BookReview',
+      id: inserted.id,
+      url: SITE_URL,
+    })
+  }
 }
 
 export async function updateBook(id: number , data: Omit<BookReview, 'id'>) {
@@ -81,6 +97,25 @@ export async function deleteBookComment(commentId: string) {
   revalidatePath('/admin')
   revalidatePath('/')
   return { success: true }
+}
+
+// Conta comentários de TODOS os livros numa só query (evita 1 POST por linha).
+export async function getCommentCounts(): Promise<Record<number, number>> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('book_comments')
+    .select('book_id')
+
+  if (error) {
+    console.error('Error fetching comment counts:', error)
+    return {}
+  }
+
+  return (data ?? []).reduce((acc, row) => {
+    acc[row.book_id] = (acc[row.book_id] ?? 0) + 1
+    return acc
+  }, {} as Record<number, number>)
 }
 
 export async function countBookComments(bookId: number): Promise<number> {
@@ -175,6 +210,108 @@ export async function markAllCommentsAsRead() {
 
   if (error) {
     console.error('Error marking all comments as read:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+// ===================== Newsletter (admin) =====================
+export async function getSubscribers(): Promise<NewsletterSubscriber[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('newsletter_subscribers')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching subscribers:', error)
+    return []
+  }
+
+  return data ?? []
+}
+
+export async function deleteSubscriber(id: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('newsletter_subscribers')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting subscriber:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+// ===================== Sugestões (admin) =====================
+export async function getSuggestions(): Promise<Suggestion[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('suggestions')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching suggestions:', error)
+    return []
+  }
+
+  return data ?? []
+}
+
+export async function getUnreadSuggestions(): Promise<Suggestion[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('suggestions')
+    .select('*')
+    .eq('is_read', false)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching unread suggestions:', error)
+    return []
+  }
+
+  return data ?? []
+}
+
+export async function markSuggestionAsRead(id: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('suggestions')
+    .update({ is_read: true })
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error marking suggestion as read:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+export async function deleteSuggestion(id: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('suggestions')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting suggestion:', error)
     return { success: false, error: error.message }
   }
 

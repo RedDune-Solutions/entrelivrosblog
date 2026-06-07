@@ -3,6 +3,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { PostInput } from '@/interface/post'
+import { notifyNewContent } from '@/lib/email/notify'
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.entrelivrosblog.pt'
 
 function slugify(str: string) {
   return str
@@ -47,10 +51,23 @@ export async function addPost(data: Omit<PostInput, 'slug' | 'publishedAt'> & { 
     publishedAt: data.publishedAt ?? new Date().toISOString(),
   }
 
-  const { error } = await supabase.from('posts').insert(payload)
+  const { data: inserted, error } = await supabase
+    .from('posts')
+    .insert(payload)
+    .select('id')
+    .single()
   if (error) return { error: error.message }
 
   revalidateAll(slug)
+
+  if (payload.published && inserted) {
+    await notifyNewContent({
+      table: 'posts',
+      id: inserted.id,
+      url: `${SITE_URL}/posts/${slug}`,
+    })
+  }
+
   return { slug }
 }
 
@@ -72,6 +89,17 @@ export async function updatePost(
   if (error) return { error: error.message }
 
   revalidateAll(slug)
+
+  // First time a post becomes published, announce it. notifyNewContent
+  // guards on notified_at, so re-saving an already-announced post is a no-op.
+  if (data.published) {
+    await notifyNewContent({
+      table: 'posts',
+      id,
+      url: `${SITE_URL}/posts/${slug}`,
+    })
+  }
+
   return { slug }
 }
 

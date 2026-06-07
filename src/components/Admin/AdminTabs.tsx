@@ -3,48 +3,74 @@
 import { useState } from "react";
 import Table from "./Table";
 import PostsTable from "./PostsTable";
+import SubscribersTable from "./SubscribersTable";
+import SuggestionsTable from "./SuggestionsTable";
 import type { BookReview, BookComment } from "@/interface/book";
 import type { Post } from "@/interface/post";
+import type { NewsletterSubscriber } from "@/interface/newsletter";
+import type { Suggestion } from "@/interface/suggestion";
 
 interface AdminTabsProps {
   books: BookReview[];
   unreadComments: BookComment[];
   posts: Post[];
+  subscribers: NewsletterSubscriber[];
+  suggestions: Suggestion[];
+  commentCounts: Record<number, number>;
 }
 
-const AdminTabs = ({ books, unreadComments, posts }: AdminTabsProps) => {
-  const [tab, setTab] = useState<"reviews" | "posts">("reviews");
+type TabKey = "reviews" | "posts" | "newsletter" | "suggestions";
+
+const AdminTabs = ({
+  books,
+  unreadComments,
+  posts,
+  subscribers,
+  suggestions,
+  commentCounts,
+}: AdminTabsProps) => {
+  const [tab, setTab] = useState<TabKey>("reviews");
+
+  const unreadSuggestions = suggestions.filter((s) => !s.is_read).length;
+
+  const tabClass = (key: TabKey) =>
+    `rounded-md px-4 py-1.5 font-body text-sm font-medium transition-colors ${
+      tab === key
+        ? "bg-primary text-primary-foreground"
+        : "text-muted-foreground hover:text-foreground"
+    }`;
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6">
-      <div className="inline-flex rounded-lg border border-border bg-card p-1">
-        <button
-          type="button"
-          onClick={() => setTab("reviews")}
-          className={`rounded-md px-4 py-1.5 font-body text-sm font-medium transition-colors ${
-            tab === "reviews"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
+      <div className="inline-flex flex-wrap gap-1 rounded-lg border border-border bg-card p-1">
+        <button type="button" onClick={() => setTab("reviews")} className={tabClass("reviews")}>
           Reviews
+        </button>
+        <button type="button" onClick={() => setTab("posts")} className={tabClass("posts")}>
+          Publicações
+        </button>
+        <button type="button" onClick={() => setTab("newsletter")} className={tabClass("newsletter")}>
+          Newsletter
         </button>
         <button
           type="button"
-          onClick={() => setTab("posts")}
-          className={`rounded-md px-4 py-1.5 font-body text-sm font-medium transition-colors ${
-            tab === "posts"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          onClick={() => setTab("suggestions")}
+          className={`relative ${tabClass("suggestions")}`}
         >
-          Publicações
+          Sugestões
+          {unreadSuggestions > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-white">
+              {unreadSuggestions}
+            </span>
+          )}
         </button>
       </div>
 
-      {tab === "reviews" ? (
-        <Table tabela={books} unreadComments={unreadComments} />
-      ) : (
+      {tab === "reviews" && (
+        <Table tabela={books} unreadComments={unreadComments} commentCounts={commentCounts} />
+      )}
+
+      {tab === "posts" && (
         <div className="mt-8">
           <PostsTable
             posts={posts}
@@ -52,6 +78,10 @@ const AdminTabs = ({ books, unreadComments, posts }: AdminTabsProps) => {
           />
         </div>
       )}
+
+      {tab === "newsletter" && <SubscribersTable subscribers={subscribers} />}
+
+      {tab === "suggestions" && <SuggestionsTable suggestions={suggestions} />}
     </div>
   );
 };

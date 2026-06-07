@@ -84,7 +84,9 @@ const Home = async () => {
         ) : (
           <div
             className={`mx-auto px-4 py-12 sm:px-6 grid gap-10 ${
-              posts.length > 0 ? "max-w-7xl xl:grid-cols-[3fr_1fr]" : "max-w-5xl"
+              posts.length > 0
+                ? "max-w-7xl 2xl:max-w-[1600px] xl:grid-cols-[3fr_1fr] 2xl:grid-cols-[4fr_1fr]"
+                : "max-w-7xl"
             }`}
           >
             {posts.length > 0 && (

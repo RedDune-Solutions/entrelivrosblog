@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, BookOpen } from "lucide-react";
+import { Heart, BookOpen, ChevronDown } from "lucide-react";
 import StarRating from "../../app/layout/StarRating";
 import type { BookReview } from "@/interface/book";
 import Image from "next/image";
@@ -14,8 +15,14 @@ interface BookDetailModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type Section = "review" | "sinopse";
+
 const BookDetailModal = ({ book, open, onOpenChange }: BookDetailModalProps) => {
   const { comments, loading, error, addComment, setRefreshKey } = useBookComments(book?.id ?? 0);
+  const [openSection, setOpenSection] = useState<Section | null>("review");
+
+  const toggleSection = (section: Section) =>
+    setOpenSection((prev) => (prev === section ? null : section));
 
   const handleCommentAdded = () => {
     setRefreshKey(prev => prev + 1);
@@ -65,14 +72,52 @@ const BookDetailModal = ({ book, open, onOpenChange }: BookDetailModalProps) => 
             <p className="mt-1 font-body text-xs text-muted-foreground">
               Avaliação {book?.reviewDate ? new Date(book.reviewDate).toLocaleDateString('pt-PT') : new Date().toLocaleDateString('pt-PT')}
             </p>
-            <div className="mt-4 flex items-center gap-1.5 text-primary">
-              <BookOpen className="h-4 w-4" />
-              <span className="font-display text-sm font-semibold">A minha avaliação</span>
-            </div>
-            <div className="mt-2 max-h-48 overflow-y-auto pr-2 whitespace-pre-wrap">
-              <p className="font-body text-sm leading-relaxed text-foreground/90">
-                {book.fullReview}
-              </p>
+
+            {/* Colapsos ao lado da capa: A minha avaliação (em cima) / Sinopse (em baixo). Um aberto de cada vez. */}
+            <div className="mt-4 divide-y divide-border">
+              <div>
+                <button
+                  type="button"
+                  onClick={() => toggleSection("review")}
+                  aria-expanded={openSection === "review"}
+                  className="flex w-full items-center justify-between py-3 text-left"
+                >
+                  <span className="flex items-center gap-1.5 font-display text-sm font-semibold text-primary">
+                    <Heart className="h-4 w-4" />
+                    A minha avaliação
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${openSection === "review" ? "rotate-180" : ""}`} />
+                </button>
+                {openSection === "review" && (
+                  <div className="max-h-60 overflow-y-auto pb-3 pr-2 whitespace-pre-wrap">
+                    <p className="font-body text-sm leading-relaxed text-foreground/90">
+                      {book.fullReview}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => toggleSection("sinopse")}
+                  aria-expanded={openSection === "sinopse"}
+                  className="flex w-full items-center justify-between py-3 text-left"
+                >
+                  <span className="flex items-center gap-1.5 font-display text-sm font-semibold text-primary">
+                    <BookOpen className="h-4 w-4" />
+                    Sinopse
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${openSection === "sinopse" ? "rotate-180" : ""}`} />
+                </button>
+                {openSection === "sinopse" && (
+                  <div className="max-h-60 overflow-y-auto pb-3 pr-2 whitespace-pre-wrap">
+                    <p className="font-body text-sm leading-relaxed text-foreground/90">
+                      {book.sinopse}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

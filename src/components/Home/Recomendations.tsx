@@ -51,7 +51,7 @@ const Recomendations = ({ livros, categories }: { livros: BookReview[]; categori
             </div>
 
             {/* Book grid */}
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-2 2xl:grid-cols-3">
             {filtered.map((book, i) => (
                 <BookCard
                 key={book.id}

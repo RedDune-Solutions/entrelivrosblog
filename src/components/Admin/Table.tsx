@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,12 +30,14 @@ import BookCommentCount from "./BookCommentCount";
 import NotificationCenter from "@/components/Admin/NotificationCenterSimple";
 
 
-const Dashboard = ( { tabela, unreadComments }: { tabela: BookReview[], unreadComments: BookComment[] } ) => {
-  
+const Dashboard = (
+  { tabela, unreadComments, commentCounts }:
+  { tabela: BookReview[], unreadComments: BookComment[], commentCounts: Record<number, number> }
+) => {
+
   const [formOpen, setFormOpen] = useState(false)
   const [editingBook, setEditingBook] = useState<BookReview | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
-  const [commentsRefreshKey, setCommentsRefreshKey] = useState(0)
 
   const handleEdit = (book: BookReview) => {
     setEditingBook(book)
@@ -46,21 +49,29 @@ const Dashboard = ( { tabela, unreadComments }: { tabela: BookReview[], unreadCo
     setFormOpen(true)
   }
 
+  // Lança erro para o BookFormModal manter o modal aberto e mostrar o estado.
   const handleSubmit = async (data: Omit<BookReview, 'id'>) => {
-    if (editingBook) {
-      await updateBook(editingBook.id, data)
-    } else {
-      await addBook(data)
+    const result = editingBook
+      ? await updateBook(editingBook.id, data)
+      : await addBook(data)
+
+    if (result?.error) {
+      toast.error(result.error)
+      throw new Error(result.error)
     }
+
     setFormOpen(false)
-    // Força refresh da contagem de comentários
-    setCommentsRefreshKey(prev => prev + 1)
+    toast.success(editingBook ? "Review atualizada" : "Review adicionada")
   }
 
   const confirmDelete = async () => {
-    if (deleteTarget) {
-      await deleteBook(deleteTarget)
-      setDeleteTarget(null)
+    if (!deleteTarget) return
+    const result = await deleteBook(deleteTarget)
+    setDeleteTarget(null)
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      toast.success("Review eliminada")
     }
   }
   
@@ -125,7 +136,7 @@ const Dashboard = ( { tabela, unreadComments }: { tabela: BookReview[], unreadCo
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <BookCommentCount bookId={book.id} refreshKey={commentsRefreshKey} />
+                        <BookCommentCount count={commentCounts[book.id] ?? 0} />
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
@@ -168,7 +179,6 @@ const Dashboard = ( { tabela, unreadComments }: { tabela: BookReview[], unreadCo
         onOpenChange={setFormOpen}
         book={editingBook}
         onSubmit={handleSubmit}
-        onCommentDeleted={() => setCommentsRefreshKey(prev => prev + 1)}
       />
       
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>

@@ -16,12 +16,12 @@ interface BookCardProps {
 const BookCard = ({ book, index, onSelect, isExpanded, onToggle }: BookCardProps) => {
   return (
     /* 1. O Wrapper mantém o espaço na grid (h-full ou altura fixa se necessário) */
-    <div className="relative min-h-[300px] w-full"> 
+    <div className="relative min-h-[300px] w-full">
       <motion.article
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: index * 0.1 }}
-        className={`group cursor-pointer rounded-lg bg-card p-5 shadow-sm border border-border/50 absolute top-0 left-0 w-full h-fit ${isExpanded ? "z-20 shadow-xl border-primary/30 " : "z-10 hover:z-20"}  transition-all duration-300 hover:shadow-xl`}
+        className={`group flex flex-col cursor-pointer rounded-lg bg-card p-5 shadow-sm border border-border/50 absolute top-0 left-0 w-full h-fit hover:overflow-hidden ${isExpanded ? "z-20 shadow-xl border-primary/30 " : "z-10 hover:z-20"} transition-all duration-300 hover:shadow-xl`}
         onClick={() => onSelect(book)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -60,14 +60,14 @@ const BookCard = ({ book, index, onSelect, isExpanded, onToggle }: BookCardProps
                   <Heart className="h-3.5 w-3.5 fill-primary text-primary" />
                 )}
               </div>
-              <h3 className="font-display text-lg font-semibold leading-tight text-foreground group-hover:text-primary transition-colors">
+              <h3 className="font-display text-lg font-semibold leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
                 {book.title}
               </h3>
               <p className="mt-0.5 font-body text-sm text-muted-foreground">
                 de {book.author}
               </p>
             </div>
-            
+
             <div className="mt-3 flex items-center justify-between">
               <StarRating rating={book.rating} />
               <span className="font-body text-xs text-muted-foreground">
@@ -80,7 +80,7 @@ const BookCard = ({ book, index, onSelect, isExpanded, onToggle }: BookCardProps
         <div className="mt-4">
           <div className="flex justify-between items-center">
             <span className="font-display text-xs font-semibold uppercase tracking-wide text-primary">Sinopse</span>
-            
+
              <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -93,15 +93,17 @@ const BookCard = ({ book, index, onSelect, isExpanded, onToggle }: BookCardProps
               {isExpanded ? <EyeClosed className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             </button>
           </div>
-          
-          <p className={`mt-1 font-body text-sm leading-relaxed text-muted-foreground transition-all duration-300 ${isExpanded ? "" : "line-clamp-2"} group-hover:line-clamp-none`}>
+
+          {/* line-clamp dá reticências automáticas quando o texto excede as linhas.
+              Hover: até 7 linhas. */}
+          <p className={`mt-1 font-body text-sm leading-relaxed text-muted-foreground transition-all duration-300 ${isExpanded ? "line-clamp-none" : "line-clamp-2"} group-hover:line-clamp-[7]`}>
             {book.sinopse}
           </p>
         </div>
 
-        <div className={`mt-3 flex items-center gap-1.5 font-body text-xs font-medium text-primary transition-opacity ${isExpanded ? 'group-hover:opacity-100' : "opacity-0"}`}>
+        <div className="mt-1 flex items-center gap-1.5 font-body text-xs font-semibold text-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           <BookOpen className="h-3.5 w-3.5" />
-          Lê a avaliação completa
+          Clica para ver a minha avaliação
         </div>
       </motion.article>
     </div>
