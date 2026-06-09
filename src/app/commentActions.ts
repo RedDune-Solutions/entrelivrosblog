@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit, getRequestIp } from '@/lib/rate-limit'
 import type { BookComment, CreateCommentInput } from '@/interface/book'
 
 export async function getBookComments(bookId: number): Promise<BookComment[]> {
@@ -23,6 +24,12 @@ export async function getBookComments(bookId: number): Promise<BookComment[]> {
 export async function createBookComment(
   input: CreateCommentInput & { user_identifier: string }
 ): Promise<{ success: boolean; error?: string; data?: BookComment }> {
+  const ip = await getRequestIp()
+  const rl = rateLimit(`comment:create:${ip}`, 10, 60 * 1000)
+  if (!rl.allowed) {
+    return { success: false, error: 'Demasiados pedidos. Tenta novamente mais tarde.' }
+  }
+
   const supabase = await createClient()
 
   if (!input.book_id || !input.user_identifier || !input.comment_text) {
@@ -80,6 +87,12 @@ export async function updateBookComment(
   commentId: string,
   input: { user_identifier: string; comment_text: string }
 ): Promise<{ success: boolean; error?: string; data?: BookComment }> {
+  const ip = await getRequestIp()
+  const rl = rateLimit(`comment:update:${ip}`, 20, 60 * 1000)
+  if (!rl.allowed) {
+    return { success: false, error: 'Demasiados pedidos. Tenta novamente mais tarde.' }
+  }
+
   const supabase = await createClient()
 
   if (!commentId || !input.user_identifier || !input.comment_text) {
@@ -135,6 +148,12 @@ export async function deleteBookCommentByUser(
   commentId: string,
   user_identifier: string
 ): Promise<{ success: boolean; error?: string }> {
+  const ip = await getRequestIp()
+  const rl = rateLimit(`comment:delete:${ip}`, 20, 60 * 1000)
+  if (!rl.allowed) {
+    return { success: false, error: 'Demasiados pedidos. Tenta novamente mais tarde.' }
+  }
+
   const supabase = await createClient()
 
   if (!commentId || !user_identifier) {
