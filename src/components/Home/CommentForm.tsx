@@ -5,6 +5,7 @@ import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { createBookComment } from "@/app/commentActions";
 import { generateUserIdentifier } from "@/lib/userIdentifier";
+import { ensureAnonUserId } from "@/lib/supabase/anon";
 
 interface CommentFormProps {
   bookId: number;
@@ -32,6 +33,9 @@ const CommentForm = ({ bookId, onCommentAdded }: CommentFormProps) => {
     setIsSubmitting(true);
 
     try {
+      // Establish an anonymous session so the comment is owned by a real
+      // auth user (enforced by RLS). Falls back to the fingerprint id.
+      await ensureAnonUserId();
       const userIdentifier = await generateUserIdentifier();
 
       const result = await createBookComment({

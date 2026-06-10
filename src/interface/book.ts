@@ -16,6 +16,7 @@ export interface BookComment {
   id: string
   book_id: number
   user_identifier: string
+  user_id?: string | null
   comment_text: string
   created_at: string
   updated_at: string

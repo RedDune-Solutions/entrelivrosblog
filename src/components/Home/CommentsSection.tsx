@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import CommentForm from "./CommentForm";
 import { useBookComments } from "@/hooks/useBookComments";
 import { generateUserIdentifier } from "@/lib/userIdentifier";
+import { ensureAnonUserId } from "@/lib/supabase/anon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -54,6 +55,7 @@ const CommentsSection = ({
     if (!editingCommentId) return;
 
     try {
+      await ensureAnonUserId();
       const userIdentifier = await generateUserIdentifier();
       const result = await updateComment(editingCommentId, {
         user_identifier: userIdentifier,
@@ -81,6 +83,7 @@ const CommentsSection = ({
 
   const handleDeleteClick = async (commentId: string) => {
     try {
+      await ensureAnonUserId();
       const userIdentifier = await generateUserIdentifier();
       const result = await deleteComment(commentId, userIdentifier);
 

@@ -57,12 +57,19 @@ export async function createBookComment(
       return { success: false, error: 'Failed to validate comment' }
     }
 
+    // Tie the comment to the (anonymous) auth user so ownership can be
+    // enforced by RLS instead of the forgeable client identifier.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
     const { data, error } = await supabase
       .from('book_comments')
       .insert([
         {
           book_id: input.book_id,
           user_identifier: input.user_identifier,
+          user_id: user?.id ?? null,
           comment_text: input.comment_text,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
