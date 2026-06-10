@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth-guard'
 import { revalidatePath } from 'next/cache'
 import type { BookReview, BookComment } from '@/interface/book'
 import type { NewsletterSubscriber } from '@/interface/newsletter'
@@ -11,6 +12,9 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.entrelivrosblog.pt'
 
 export async function addBook(data: Omit<BookReview, 'id' | 'reviewDate'>) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { error: guard.error }
+
   const supabase = await createClient()
 
   const { data: inserted, error } = await supabase
@@ -34,6 +38,9 @@ export async function addBook(data: Omit<BookReview, 'id' | 'reviewDate'>) {
 }
 
 export async function updateBook(id: number , data: Omit<BookReview, 'id'>) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { error: guard.error }
+
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -48,11 +55,11 @@ export async function updateBook(id: number , data: Omit<BookReview, 'id'>) {
 }
 
 export async function deleteBook(id: number) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { error: guard.error }
+
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  console.log('user autenticado:', user)
-  
   const { error } = await supabase
     .from('BookReview')
     .delete()
@@ -82,6 +89,9 @@ export async function getBookCommentsForAdmin(bookId: number): Promise<BookComme
 }
 
 export async function deleteBookComment(commentId: string) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { success: false, error: guard.error }
+
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -219,6 +229,9 @@ export async function markAllCommentsAsRead() {
 
 // ===================== Newsletter (admin) =====================
 export async function getSubscribers(): Promise<NewsletterSubscriber[]> {
+  const guard = await requireAdmin()
+  if (!guard.ok) return []
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -235,6 +248,9 @@ export async function getSubscribers(): Promise<NewsletterSubscriber[]> {
 }
 
 export async function deleteSubscriber(id: string) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { success: false, error: guard.error }
+
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -253,6 +269,9 @@ export async function deleteSubscriber(id: string) {
 
 // ===================== Sugestões (admin) =====================
 export async function getSuggestions(): Promise<Suggestion[]> {
+  const guard = await requireAdmin()
+  if (!guard.ok) return []
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -303,6 +322,9 @@ export async function markSuggestionAsRead(id: string) {
 }
 
 export async function deleteSuggestion(id: string) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { success: false, error: guard.error }
+
   const supabase = await createClient()
 
   const { error } = await supabase
