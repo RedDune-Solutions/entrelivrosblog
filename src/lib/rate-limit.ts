@@ -1,6 +1,7 @@
 import 'server-only'
 import { headers } from 'next/headers'
 import { redisRateLimit } from './rate-limit-redis'
+import { createClient } from './supabase/server'
 
 // Simple in-memory rate limiter for server actions and route handlers.
 // State lives in the process memory (per instance), so it is not shared across
@@ -43,9 +44,40 @@ export function rateLimit(
   }
 }
 
-// Prefer the shared Upstash store (consistent across serverless instances),
-// falling back to the per-instance in-memory limiter when Redis is not
-// configured or unreachable.
+// Shared counter in the project's own Postgres via the rate_limit_hit RPC
+// (migration 0005). Returns null when the function is not deployed yet or on
+// any error, so callers fall back to the in-memory limiter.
+async function supabaseRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<RateLimitResult | null> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.rpc('rate_limit_hit', {
+      p_key: key,
+      p_limit: limit,
+      p_window_ms: windowMs,
+    })
+    if (error || !data || !data[0]) return null
+    const row = data[0] as {
+      allowed: boolean
+      remaining: number
+      reset_at: string
+    }
+    return {
+      allowed: row.allowed,
+      remaining: row.remaining,
+      resetAt: new Date(row.reset_at).getTime(),
+    }
+  } catch {
+    return null
+  }
+}
+
+// Shared rate limit, consistent across serverless instances. Tries Upstash
+// (if configured) -> the project's own Postgres (rate_limit_hit RPC) -> the
+// per-instance in-memory limiter as last resort.
 export async function rateLimitDistributed(
   key: string,
   limit: number,
@@ -53,6 +85,8 @@ export async function rateLimitDistributed(
 ): Promise<RateLimitResult> {
   const redis = await redisRateLimit(key, limit, windowMs)
   if (redis) return redis
+  const pg = await supabaseRateLimit(key, limit, windowMs)
+  if (pg) return pg
   return rateLimit(key, limit, windowMs)
 }
 

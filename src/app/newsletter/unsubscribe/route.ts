@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { rateLimit, getRequestIp } from '@/lib/rate-limit'
+import { rateLimitDistributed, getRequestIp } from '@/lib/rate-limit'
 
 function page(title: string, message: string, ok: boolean) {
   return `<!doctype html>
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   }
 
   const ip = await getRequestIp()
-  const rl = rateLimit(`unsubscribe:${ip}`, 20, 10 * 60 * 1000)
+  const rl = await rateLimitDistributed(`unsubscribe:${ip}`, 20, 10 * 60 * 1000)
   if (!rl.allowed) {
     return html(
       'Demasiados pedidos',

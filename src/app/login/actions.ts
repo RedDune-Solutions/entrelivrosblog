@@ -1,12 +1,12 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { rateLimit, getRequestIp } from '@/lib/rate-limit'
+import { rateLimitDistributed, getRequestIp } from '@/lib/rate-limit'
 import { redirect } from 'next/navigation'
 
 export async function login(formData: FormData) {
   const ip = await getRequestIp()
-  const rl = rateLimit(`login:${ip}`, 10, 10 * 60 * 1000)
+  const rl = await rateLimitDistributed(`login:${ip}`, 10, 10 * 60 * 1000)
   if (!rl.allowed) {
     return { error: 'Demasiadas tentativas. Tenta novamente mais tarde.' }
   }
