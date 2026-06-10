@@ -1,5 +1,6 @@
 import 'server-only'
 import { headers } from 'next/headers'
+import { redisRateLimit } from './rate-limit-redis'
 
 // Simple in-memory rate limiter for server actions and route handlers.
 // State lives in the process memory (per instance), so it is not shared across
@@ -40,6 +41,19 @@ export function rateLimit(
     remaining: limit - existing.count,
     resetAt: existing.resetAt,
   }
+}
+
+// Prefer the shared Upstash store (consistent across serverless instances),
+// falling back to the per-instance in-memory limiter when Redis is not
+// configured or unreachable.
+export async function rateLimitDistributed(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<RateLimitResult> {
+  const redis = await redisRateLimit(key, limit, windowMs)
+  if (redis) return redis
+  return rateLimit(key, limit, windowMs)
 }
 
 // Reads the caller IP from the forwarded headers. Works inside server actions

@@ -1,7 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { rateLimit, getRequestIp } from '@/lib/rate-limit'
+import { rateLimitDistributed, getRequestIp } from '@/lib/rate-limit'
+import { verifyTurnstile } from '@/lib/turnstile'
 import type { BookComment, CreateCommentInput } from '@/interface/book'
 
 export async function getBookComments(bookId: number): Promise<BookComment[]> {
@@ -22,12 +23,18 @@ export async function getBookComments(bookId: number): Promise<BookComment[]> {
 }
 
 export async function createBookComment(
-  input: CreateCommentInput & { user_identifier: string }
+  input: CreateCommentInput & { user_identifier: string; turnstileToken?: string }
 ): Promise<{ success: boolean; error?: string; data?: BookComment }> {
   const ip = await getRequestIp()
-  const rl = rateLimit(`comment:create:${ip}`, 10, 60 * 1000)
+  const rl = await rateLimitDistributed(`comment:create:${ip}`, 10, 60 * 1000)
   if (!rl.allowed) {
     return { success: false, error: 'Demasiados pedidos. Tenta novamente mais tarde.' }
+  }
+
+  // CAPTCHA — verified only when Turnstile is configured (otherwise skipped).
+  const captchaOk = await verifyTurnstile(input.turnstileToken ?? null, ip)
+  if (!captchaOk) {
+    return { success: false, error: 'Verificação anti-spam falhou. Tenta novamente.' }
   }
 
   const supabase = await createClient()
@@ -95,7 +102,7 @@ export async function updateBookComment(
   input: { user_identifier: string; comment_text: string }
 ): Promise<{ success: boolean; error?: string; data?: BookComment }> {
   const ip = await getRequestIp()
-  const rl = rateLimit(`comment:update:${ip}`, 20, 60 * 1000)
+  const rl = await rateLimitDistributed(`comment:update:${ip}`, 20, 60 * 1000)
   if (!rl.allowed) {
     return { success: false, error: 'Demasiados pedidos. Tenta novamente mais tarde.' }
   }
@@ -156,7 +163,7 @@ export async function deleteBookCommentByUser(
   user_identifier: string
 ): Promise<{ success: boolean; error?: string }> {
   const ip = await getRequestIp()
-  const rl = rateLimit(`comment:delete:${ip}`, 20, 60 * 1000)
+  const rl = await rateLimitDistributed(`comment:delete:${ip}`, 20, 60 * 1000)
   if (!rl.allowed) {
     return { success: false, error: 'Demasiados pedidos. Tenta novamente mais tarde.' }
   }

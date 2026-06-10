@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createBookComment } from "@/app/commentActions";
 import { generateUserIdentifier } from "@/lib/userIdentifier";
 import { ensureAnonUserId } from "@/lib/supabase/anon";
+import Turnstile from "@/components/Turnstile";
 
 interface CommentFormProps {
   bookId: number;
@@ -16,6 +17,7 @@ const CommentForm = ({ bookId, onCommentAdded }: CommentFormProps) => {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [charCount, setCharCount] = useState(0);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +44,7 @@ const CommentForm = ({ bookId, onCommentAdded }: CommentFormProps) => {
         book_id: bookId,
         user_identifier: userIdentifier,
         comment_text: comment.trim(),
+        turnstileToken,
       });
 
       if (!result.success) {
@@ -84,6 +87,7 @@ const CommentForm = ({ bookId, onCommentAdded }: CommentFormProps) => {
           rows={3}
           disabled={isSubmitting}
         />
+        <Turnstile onVerify={setTurnstileToken} />
         <div className="flex items-center justify-between mt-2">
           <span className="font-body text-xs text-muted-foreground">
             {charCount}/250
