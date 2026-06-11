@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth-guard'
 import { revalidatePath } from 'next/cache'
 import type { PostInput } from '@/interface/post'
 import { notifyNewContent } from '@/lib/email/notify'
@@ -42,6 +43,9 @@ function revalidateAll(slug?: string) {
 }
 
 export async function addPost(data: Omit<PostInput, 'slug' | 'publishedAt'> & { publishedAt?: string }) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { error: guard.error }
+
   const supabase = await createClient()
 
   const slug = await uniqueSlug(slugify(data.title))
@@ -75,6 +79,9 @@ export async function updatePost(
   id: number,
   data: Omit<PostInput, 'slug' | 'publishedAt'> & { slug?: string; publishedAt?: string }
 ) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { error: guard.error }
+
   const supabase = await createClient()
 
   const slug = data.slug && data.slug.length > 0
@@ -104,6 +111,9 @@ export async function updatePost(
 }
 
 export async function deletePost(id: number) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { error: guard.error }
+
   const supabase = await createClient()
 
   const { data: existing } = await supabase

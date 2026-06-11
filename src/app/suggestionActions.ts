@@ -1,12 +1,19 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitDistributed, getRequestIp } from '@/lib/rate-limit'
 
 const MAX_LEN = 500
 
 export async function createSuggestion(
   text: string
 ): Promise<{ success: boolean; error?: string }> {
+  const ip = await getRequestIp()
+  const rl = await rateLimitDistributed(`suggestion:${ip}`, 5, 10 * 60 * 1000)
+  if (!rl.allowed) {
+    return { success: false, error: 'Demasiados pedidos. Tenta novamente mais tarde.' }
+  }
+
   const value = (text ?? '').trim()
 
   if (!value) {
