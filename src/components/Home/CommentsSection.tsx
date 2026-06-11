@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import CommentForm from "./CommentForm";
 import { useBookComments } from "@/hooks/useBookComments";
 import { generateUserIdentifier } from "@/lib/userIdentifier";
-import { ensureAnonUserId } from "@/lib/supabase/anon";
+import { ensureAnonUserId, getAnonUserId } from "@/lib/supabase/anon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -33,12 +33,13 @@ const CommentsSection = ({
   const [currentUserIdentifier, setCurrentUserIdentifier] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Establish the anonymous session and remember its id, plus the legacy
-  // fingerprint (used only for comments created before the session model).
+  // Read the existing session id (without creating one — passive readers stay
+  // cookie-free) and the local anonymous id, to decide which comments are the
+  // visitor's own.
   useEffect(() => {
     const init = async () => {
       try {
-        setCurrentUserId(await ensureAnonUserId());
+        setCurrentUserId(await getAnonUserId());
         setCurrentUserIdentifier(await generateUserIdentifier());
       } catch (error) {
         console.error("Error initialising comment identity:", error);
