@@ -31,20 +31,30 @@ const CommentsSection = ({
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [currentUserIdentifier, setCurrentUserIdentifier] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Obter o identificador do usuário atual
+  // Establish the anonymous session and remember its id, plus the legacy
+  // fingerprint (used only for comments created before the session model).
   useEffect(() => {
-    const fetchUserIdentifier = async () => {
+    const init = async () => {
       try {
-        const identifier = await generateUserIdentifier();
-        setCurrentUserIdentifier(identifier);
+        setCurrentUserId(await ensureAnonUserId());
+        setCurrentUserIdentifier(await generateUserIdentifier());
       } catch (error) {
-        console.error("Error generating user identifier:", error);
+        console.error("Error initialising comment identity:", error);
       }
     };
 
-    fetchUserIdentifier();
+    init();
   }, []);
+
+  // A comment is the current visitor's when it belongs to their session, or
+  // (for legacy comments with no session) when the fingerprint matches.
+  const isOwnComment = (comment: BookComment) =>
+    (currentUserId != null && comment.user_id === currentUserId) ||
+    (comment.user_id == null &&
+      currentUserIdentifier != null &&
+      comment.user_identifier === currentUserIdentifier);
 
   const handleEditClick = (comment: BookComment) => {
     setEditingCommentId(comment.id);
@@ -186,7 +196,7 @@ const CommentsSection = ({
                         <p className="flex-1 font-body text-xs text-foreground break-words">
                           {comment.comment_text}
                         </p>
-                        {currentUserIdentifier && comment.user_identifier === currentUserIdentifier && (
+                        {isOwnComment(comment) && (
                           <div className="flex gap-1">
                             <Button
                               size="icon"
