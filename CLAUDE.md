@@ -17,10 +17,16 @@ Admin única: a Tatiana, via Supabase Auth. Deploy = push para `main` (Vercel au
   para corrigir os livros que às vezes não carregavam (era render dinâmico + sem retry).
 
 ## Migrações Supabase (em `supabase/migrations/`)
-- `0003` adiciona `book_comments.user_id` (aditiva, segura).
-- `0004` RLS estrita dos comentários — **exige Anonymous sign-ins ligado primeiro**.
-- `0005` store do rate limit (`rate_limit_hit`).
-- O utilizador reportou ter feito "tudo no Supabase" (anonymous sign-ins + migrações) — **confirmar**.
+- `0003` adiciona `book_comments.user_id` (aditiva) — ✅ APLICADA (2026-06-13).
+- `0004` RLS estrita dos comentários (dono + admin) — ✅ APLICADA (2026-06-13).
+  Policies ativas: SELECT público; INSERT/UPDATE/DELETE `to authenticated` com
+  `user_id = auth.uid()` ou admin (`is_anonymous = false`).
+- `0005` store do rate limit (`rate_limit_hit`) — ❌ NÃO aplicada (desnecessária; usa
+  fallback em memória). Não voltar a tentar sem o utilizador pedir.
+- Anonymous sign-ins: ✅ LIGADO (confirmado nos logs de auth).
+- Histórico do bug: o utilizador ligou só o toggle das sessões anónimas mas NÃO correu
+  as migrações; o código (já em prod) gravava `user_id` numa coluna inexistente e
+  comentar rebentava. Resolvido ao aplicar a `0003`; a `0004` fechou a vulnerabilidade.
 - "Leaked Password Protection" NÃO ficou ligada (não encontrada no painel) — opcional.
 
 ## Opcional / pendente
