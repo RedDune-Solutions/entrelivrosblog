@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import CommentForm from "./CommentForm";
 import { useBookComments } from "@/hooks/useBookComments";
 import { generateUserIdentifier } from "@/lib/userIdentifier";
+import { ensureAnonUserId, getAnonUserId } from "@/lib/supabase/anon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -30,20 +31,31 @@ const CommentsSection = ({
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [currentUserIdentifier, setCurrentUserIdentifier] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Obter o identificador do usuário atual
+  // Read the existing session id (without creating one — passive readers stay
+  // cookie-free) and the local anonymous id, to decide which comments are the
+  // visitor's own.
   useEffect(() => {
-    const fetchUserIdentifier = async () => {
+    const init = async () => {
       try {
-        const identifier = await generateUserIdentifier();
-        setCurrentUserIdentifier(identifier);
+        setCurrentUserId(await getAnonUserId());
+        setCurrentUserIdentifier(await generateUserIdentifier());
       } catch (error) {
-        console.error("Error generating user identifier:", error);
+        console.error("Error initialising comment identity:", error);
       }
     };
 
-    fetchUserIdentifier();
+    init();
   }, []);
+
+  // A comment is the current visitor's when it belongs to their session, or
+  // (for legacy comments with no session) when the fingerprint matches.
+  const isOwnComment = (comment: BookComment) =>
+    (currentUserId != null && comment.user_id === currentUserId) ||
+    (comment.user_id == null &&
+      currentUserIdentifier != null &&
+      comment.user_identifier === currentUserIdentifier);
 
   const handleEditClick = (comment: BookComment) => {
     setEditingCommentId(comment.id);
@@ -54,6 +66,7 @@ const CommentsSection = ({
     if (!editingCommentId) return;
 
     try {
+      await ensureAnonUserId();
       const userIdentifier = await generateUserIdentifier();
       const result = await updateComment(editingCommentId, {
         user_identifier: userIdentifier,
@@ -81,6 +94,7 @@ const CommentsSection = ({
 
   const handleDeleteClick = async (commentId: string) => {
     try {
+      await ensureAnonUserId();
       const userIdentifier = await generateUserIdentifier();
       const result = await deleteComment(commentId, userIdentifier);
 
@@ -183,7 +197,7 @@ const CommentsSection = ({
                         <p className="flex-1 font-body text-xs text-foreground break-words">
                           {comment.comment_text}
                         </p>
-                        {currentUserIdentifier && comment.user_identifier === currentUserIdentifier && (
+                        {isOwnComment(comment) && (
                           <div className="flex gap-1">
                             <Button
                               size="icon"

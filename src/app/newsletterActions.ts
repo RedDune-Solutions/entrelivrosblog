@@ -1,12 +1,19 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitDistributed, getRequestIp } from '@/lib/rate-limit'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function subscribeNewsletter(
   email: string
 ): Promise<{ success: boolean; error?: string; alreadySubscribed?: boolean }> {
+  const ip = await getRequestIp()
+  const rl = await rateLimitDistributed(`newsletter:${ip}`, 5, 10 * 60 * 1000)
+  if (!rl.allowed) {
+    return { success: false, error: 'Demasiados pedidos. Tenta novamente mais tarde.' }
+  }
+
   const value = (email ?? '').trim().toLowerCase()
 
   if (!value || !EMAIL_RE.test(value)) {

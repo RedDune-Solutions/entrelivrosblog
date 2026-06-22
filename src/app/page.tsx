@@ -3,57 +3,66 @@ import Recomendations from "@/components/Home/Recomendations";
 import LatestPosts from "@/components/Home/LatestPosts";
 import Footer from "@/app/layout/Footer";
 import Navbar from "./layout/NavBar";
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
+import { withRetry } from '@/lib/retry'
 import { BookReview } from "@/interface/book";
 import { Post, PostWithBook } from "@/interface/post";
 
 export const revalidate = 3600;
 
 async function getBooks() : Promise<BookReview[]> {
-  const supabase = await createClient()
+  // Cookie-less client + retry so a single transient DB hiccup does not blank
+  // the page, and so this route stays statically cacheable (ISR).
+  return withRetry(async () => {
+    const supabase = createPublicClient()
 
-  const { data, error } = await supabase
-    .from('BookReview')
-    .select('id, title, author, rating, genre, reviewDate, sinopse, fullReview, recommendation, bookCoverUrl')
-    .order('reviewDate', { ascending: false })
+    const { data, error } = await supabase
+      .from('BookReview')
+      .select('id, title, author, rating, genre, reviewDate, sinopse, fullReview, recommendation, bookCoverUrl')
+      .order('reviewDate', { ascending: false })
 
-  if (error) {
-    console.error('Failed to fetch books:', error)
-    throw new Error('Failed to load book reviews')
-  }
+    if (error) {
+      console.error('Failed to fetch books:', error)
+      throw new Error('Failed to load book reviews')
+    }
 
-  return data ?? []
+    return data ?? []
+  })
 }
 
 async function getLatestPosts(): Promise<PostWithBook[]> {
-  const supabase = await createClient()
+  try {
+    return await withRetry(async () => {
+      const supabase = createPublicClient()
 
-  const { data, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('published', true)
-    .order('publishedAt', { ascending: false })
-    .limit(10)
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('published', true)
+        .order('publishedAt', { ascending: false })
+        .limit(10)
 
-  if (error) {
-    console.error('Failed to fetch posts:', error)
+      if (error) throw error
+
+      const posts = (data ?? []) as Post[]
+      const bookIds = [...new Set(posts.map((p) => p.bookId).filter((id): id is number => id !== null))]
+
+      if (bookIds.length === 0) {
+        return posts.map((p) => ({ ...p, book: null }))
+      }
+
+      const { data: books } = await supabase
+        .from('BookReview')
+        .select('id, title, author')
+        .in('id', bookIds)
+
+      const byId = new Map((books ?? []).map((b) => [b.id, b]))
+      return posts.map((p) => ({ ...p, book: p.bookId !== null ? byId.get(p.bookId) ?? null : null }))
+    })
+  } catch (e) {
+    console.error('Failed to fetch posts:', e)
     return []
   }
-
-  const posts = (data ?? []) as Post[]
-  const bookIds = [...new Set(posts.map((p) => p.bookId).filter((id): id is number => id !== null))]
-
-  if (bookIds.length === 0) {
-    return posts.map((p) => ({ ...p, book: null }))
-  }
-
-  const { data: books } = await supabase
-    .from('BookReview')
-    .select('id, title, author')
-    .in('id', bookIds)
-
-  const byId = new Map((books ?? []).map((b) => [b.id, b]))
-  return posts.map((p) => ({ ...p, book: p.bookId !== null ? byId.get(p.bookId) ?? null : null }))
 }
 
 

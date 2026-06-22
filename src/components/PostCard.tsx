@@ -16,6 +16,7 @@ const PostCard = ({ post, variant = "sidebar" }: PostCardProps) => {
       className="group block overflow-hidden rounded-lg border border-border/50 bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/30"
     >
       {post.coverImageUrl ? (
+<<<<<<< HEAD
         <div className="overflow-hidden">
           <Image
             src={post.coverImageUrl}
@@ -23,6 +24,14 @@ const PostCard = ({ post, variant = "sidebar" }: PostCardProps) => {
             width={600}
             height={400}
             className="h-auto w-full object-contain transition-transform duration-300 group-hover:scale-105"
+=======
+        <div className={`relative overflow-hidden rounded-md ${compact ? "h-28" : "h-48"} mb-3`}>
+          <Image
+            src={post.coverImageUrl}
+            alt={post.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+>>>>>>> 6ece3bf6b5bc7540ce4480d8e3476bc46f242353
             sizes={compact ? "300px" : "(min-width: 1024px) 600px, 100vw"}
           />
         </div>
