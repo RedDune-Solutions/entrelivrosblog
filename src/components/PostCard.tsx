@@ -13,7 +13,7 @@ const PostCard = ({ post, variant = "sidebar" }: PostCardProps) => {
   return (
     <Link
       href={`/posts/${post.slug}`}
-      className="group block overflow-hidden rounded-lg border border-border/50 bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/30"
+      className="group block rounded-lg border border-border/50 bg-card p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/30"
     >
       {post.coverImageUrl ? (
         <div className={`relative overflow-hidden rounded-md ${compact ? "h-28" : "h-48"} mb-3`}>
@@ -31,7 +31,6 @@ const PostCard = ({ post, variant = "sidebar" }: PostCardProps) => {
         </div>
       )}
 
-      <div className="p-4">
       <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
         <span className="font-body text-muted-foreground">
           {new Date(post.publishedAt).toLocaleDateString("pt-PT")}
@@ -61,7 +60,6 @@ const PostCard = ({ post, variant = "sidebar" }: PostCardProps) => {
           {post.excerpt}
         </p>
       )}
-      </div>
     </Link>
   );
 };
