@@ -13,25 +13,26 @@ const PostCard = ({ post, variant = "sidebar" }: PostCardProps) => {
   return (
     <Link
       href={`/posts/${post.slug}`}
-      className="group block rounded-lg border border-border/50 bg-card p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/30"
+      className="group block overflow-hidden rounded-lg border border-border/50 bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/30"
     >
       {post.coverImageUrl ? (
-        <div className={`overflow-hidden rounded-md ${compact ? "h-28" : "h-48"} mb-3`}>
+        <div className="overflow-hidden">
           <Image
             src={post.coverImageUrl}
             alt={post.title}
             width={600}
             height={400}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-auto w-full object-contain transition-transform duration-300 group-hover:scale-105"
             sizes={compact ? "300px" : "(min-width: 1024px) 600px, 100vw"}
           />
         </div>
       ) : (
-        <div className={`flex ${compact ? "h-28" : "h-32"} mb-3 items-center justify-center rounded-md bg-muted`}>
+        <div className={`flex ${compact ? "h-28" : "h-32"} items-center justify-center bg-muted`}>
           <FileText className="h-8 w-8 text-muted-foreground" />
         </div>
       )}
 
+      <div className="p-4">
       <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
         <span className="font-body text-muted-foreground">
           {new Date(post.publishedAt).toLocaleDateString("pt-PT")}
@@ -61,6 +62,7 @@ const PostCard = ({ post, variant = "sidebar" }: PostCardProps) => {
           {post.excerpt}
         </p>
       )}
+      </div>
     </Link>
   );
 };
