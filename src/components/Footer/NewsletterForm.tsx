@@ -62,6 +62,8 @@ const NewsletterForm = () => {
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
+          id="newsletter-email"
+          name="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
