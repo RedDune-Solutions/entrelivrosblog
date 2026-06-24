@@ -15,7 +15,11 @@ interface NavLinkCompatProps {
 const NavLink = forwardRef<HTMLAnchorElement, NavLinkCompatProps>(
   ({ className, activeClassName, to, ...props }, ref) => {
     const pathname = usePathname();
-    const isActive = pathname === to;
+    const isActive = (() => {
+      if (!pathname) return false;
+      if (to === "/") return pathname === "/";
+      return pathname === to || pathname.startsWith(`${to}/`);
+    })();
 
     return (
       <Link

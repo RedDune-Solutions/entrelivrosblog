@@ -25,7 +25,13 @@ const Navbar = () => {
         {/* Links */}
         <div className="flex items-center gap-1">
           {navLinks.map((link) => {
-            const isActive = pathname === link.path;
+            const isActive = (() => {
+              if (!pathname) return false;
+              // Root must match exactly '/'
+              if (link.path === '/') return pathname === '/';
+              // A link is active if pathname equals the link path or is a nested route
+              return pathname === link.path || pathname.startsWith(`${link.path}/`);
+            })();
 
             return (
               <Link
