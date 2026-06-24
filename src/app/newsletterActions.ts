@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { rateLimitDistributed, getRequestIp } from '@/lib/rate-limit'
+import { sendWelcomeEmail } from '@/lib/email/mailer'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -22,9 +23,19 @@ export async function subscribeNewsletter(
 
   const supabase = await createClient()
 
+  // Generate the token server-side: the RLS select policy is admin-only,
+  // so we can't read the row back after inserting as anon. Knowing the
+  // token up front lets us send the welcome email with a working
+  // unsubscribe link.
+  const unsubscribe_token = crypto.randomUUID()
+
   const { error } = await supabase
     .from('newsletter_subscribers')
-    .insert({ email: value, consent_at: new Date().toISOString() })
+    .insert({
+      email: value,
+      consent_at: new Date().toISOString(),
+      unsubscribe_token,
+    })
 
   if (error) {
     // 23505 = unique_violation (already subscribed)
@@ -34,6 +45,9 @@ export async function subscribeNewsletter(
     console.error('Error subscribing to newsletter:', error)
     return { success: false, error: 'Não foi possível subscrever' }
   }
+
+  // First-time subscriber: send the welcome email (best-effort, never blocks).
+  await sendWelcomeEmail({ email: value, unsubscribe_token })
 
   return { success: true }
 }

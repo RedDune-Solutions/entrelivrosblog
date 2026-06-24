@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { sendNewContentEmail } from './resend'
+import { sendNewContentEmail } from './mailer'
 
 interface NotifyArgs {
   table: 'posts' | 'BookReview'
