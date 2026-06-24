@@ -12,8 +12,14 @@ interface SubscribersTableProps {
 
 const SubscribersTable = ({ subscribers }: SubscribersTableProps) => {
   const [rows, setRows] = useState<NewsletterSubscriber[]>(subscribers);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
+    if (confirmId !== id) {
+      setConfirmId(id);
+      return;
+    }
+    setConfirmId(null);
     const prev = rows;
     setRows((r) => r.filter((s) => s.id !== id));
 
@@ -85,14 +91,34 @@ const SubscribersTable = ({ subscribers }: SubscribersTableProps) => {
                     {new Date(s.created_at).toLocaleDateString("pt-PT")}
                   </td>
                   <td className="px-4 py-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(s.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                      aria-label="Remover subscritor"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {confirmId === s.id ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="font-body text-xs text-muted-foreground">Tens a certeza?</span>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(s.id)}
+                          className="font-body text-xs font-medium text-destructive hover:underline"
+                        >
+                          Sim
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmId(null)}
+                          className="font-body text-xs text-muted-foreground hover:underline"
+                        >
+                          Não
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(s.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label="Remover subscritor"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
