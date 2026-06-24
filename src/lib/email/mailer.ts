@@ -1,7 +1,10 @@
 import nodemailer from 'nodemailer'
 
+// Use || (not ??) so an empty-string env var still falls back to the real
+// domain — otherwise email links become relative ("/newsletter/...") and 404
+// from inside the reader's webmail.
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.entrelivrosblog.pt'
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.entrelivrosblog.pt'
 
 const FROM =
   process.env.SMTP_FROM ?? 'Entre Livros <newsletter@entrelivrosblog.pt>'

@@ -8,8 +8,9 @@ import type { NewsletterSubscriber } from '@/interface/newsletter'
 import type { Suggestion } from '@/interface/suggestion'
 import { notifyNewContent } from '@/lib/email/notify'
 
+// || (not ??) so an empty-string env var falls back to the real domain.
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.entrelivrosblog.pt'
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.entrelivrosblog.pt'
 
 export async function addBook(data: Omit<BookReview, 'id' | 'reviewDate'>) {
   const guard = await requireAdmin()

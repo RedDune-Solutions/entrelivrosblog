@@ -6,8 +6,9 @@ import { revalidatePath } from 'next/cache'
 import type { PostInput } from '@/interface/post'
 import { notifyNewContent } from '@/lib/email/notify'
 
+// || (not ??) so an empty-string env var falls back to the real domain.
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.entrelivrosblog.pt'
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.entrelivrosblog.pt'
 
 function slugify(str: string) {
   return str
