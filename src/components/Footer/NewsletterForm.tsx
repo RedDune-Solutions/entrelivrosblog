@@ -34,9 +34,9 @@ const NewsletterForm = () => {
       }
 
       if (result.alreadySubscribed) {
-        toast.success("Já estás subscrito. Obrigado!");
+        toast.info("Já estavas subscrito na newsletter.");
       } else {
-        toast.success("Subscrição feita! Vais receber as novidades.");
+        toast.success("Acabaste de subscrever a newsletter, obrigado!");
       }
 
       setEmail("");
