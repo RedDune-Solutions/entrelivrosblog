@@ -5,16 +5,23 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
 export async function proxy(request: NextRequest) {
-  
+
   let response = NextResponse.next({
     request: { headers: request.headers },
   })
 
+  // If Supabase env vars are missing, do NOT crash the whole site. Skip the
+  // auth check and let the request through. /admin will fall back to its own
+  // server-side requireAdmin() guard. Only protected redirects are lost.
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('proxy: missing Supabase env vars — skipping auth middleware')
+    return response
+  }
 
   // 1. INICIALIZAR SUPABASE (Necessário para atualizar o token)
   const supabase = createServerClient(
-    supabaseUrl!,
-    supabaseKey!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
