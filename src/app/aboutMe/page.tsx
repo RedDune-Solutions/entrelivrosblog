@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Content from "@/components/AboutMe/Content";
 import Footer from "@/app/layout/Footer";
 import Navbar from "../layout/NavBar";
-import { createClient } from "@/lib/supabase/client";
+import { createPublicClient } from "@/lib/supabase/public";
 import { BookReview } from "@/interface/book";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 async function getBooks() : Promise<BookReview[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   
   const { data, error } = await supabase
     .from('BookReview')
@@ -32,7 +32,9 @@ const About = async () => {
     acc[livro.genre] = (acc[livro.genre] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
-  const categoriaFavorita = Object.keys(favCategory).reduce((a, b) => favCategory[a] > favCategory[b] ? a : b);
+  const categoriaFavorita = Object.keys(favCategory).length > 0
+    ? Object.keys(favCategory).reduce((a, b) => favCategory[a] > favCategory[b] ? a : b)
+    : "";
   
   console.log(livros)
 

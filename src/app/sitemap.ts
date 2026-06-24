@@ -1,15 +1,11 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { createPublicClient } from "@/lib/supabase/public";
 
 export const revalidate = 3600;
 
 // Anon read-only client — no cookies, safe for static generation
 function publicClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!,
-    { auth: { persistSession: false } }
-  );
+  return createPublicClient();
 }
 
 const BASE_URL =
