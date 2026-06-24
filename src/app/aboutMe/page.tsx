@@ -11,16 +11,25 @@ export const metadata: Metadata = {
     "Conhece a Tatiana Felicio, a leitora por detras do blog Entre Livros. Descobre a sua historia, os seus gostos literarios e o que a inspira.",
 };
 
-async function getBooks() : Promise<BookReview[]> {
-  const supabase = createPublicClient()
-  
-  const { data, error } = await supabase
-    .from('BookReview')
-    .select('*')
-    .order('reviewDate', { ascending: false })
+export const revalidate = 3600;
 
-  if (error) console.error(error)
-  return data ?? []
+async function getBooks() : Promise<BookReview[]> {
+  // Never throw during prerender: if the client can't be built (missing env)
+  // or the query fails, degrade to empty stats instead of crashing the build.
+  try {
+    const supabase = createPublicClient()
+
+    const { data, error } = await supabase
+      .from('BookReview')
+      .select('*')
+      .order('reviewDate', { ascending: false })
+
+    if (error) console.error(error)
+    return data ?? []
+  } catch (err) {
+    console.error('aboutMe getBooks failed:', err)
+    return []
+  }
 }
 
 
@@ -35,8 +44,6 @@ const About = async () => {
   const categoriaFavorita = Object.keys(favCategory).length > 0
     ? Object.keys(favCategory).reduce((a, b) => favCategory[a] > favCategory[b] ? a : b)
     : "";
-  
-  console.log(livros)
 
   return (
     <div className="min-h-screen bg-background">
