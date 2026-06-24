@@ -26,20 +26,11 @@ function shell(title: string, inner: string, ok: boolean) {
       .btn:hover { filter: brightness(1.06); }
     </style>
   </head>
-  <body style="min-height:100vh;display:flex;flex-direction:column;background:hsl(36 33% 97%);color:hsl(20 10% 15%);font-family:'Source Sans 3',system-ui,sans-serif">
-    <header style="border-bottom:1px solid hsl(30 15% 85%)">
-      <div style="max-width:1120px;margin:0 auto;padding:14px 24px">
-        <a href="/" aria-label="Entre Livros" style="display:inline-block">
-          <img src="/logo.svg" alt="Entre Livros" style="height:38px;width:auto;display:block" />
-        </a>
-      </div>
-    </header>
-    <main style="flex:1;display:flex;align-items:center;justify-content:center;padding:48px 20px">
-      <div style="width:100%;max-width:440px;background:hsl(36 30% 95%);border:1px solid hsl(30 15% 85%);border-radius:14px;padding:40px 32px;text-align:center;box-shadow:0 1px 3px rgba(20,16,12,.05)">
-        <p style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:hsl(20 8% 50%);margin:0 0 18px">Newsletter</p>
-        <h1 style="font-family:'Playfair Display',Georgia,serif;font-weight:600;font-size:26px;line-height:1.25;margin:0 0 14px;color:hsl(20 10% 15%)">${title}</h1>
-        <div style="font-size:16px;line-height:1.65;color:${accent}">${inner}</div>
-      </div>
+  <body style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px 20px;background:hsl(36 33% 97%);color:hsl(20 10% 15%);font-family:'Source Sans 3',system-ui,sans-serif">
+    <main style="width:100%;max-width:440px;background:hsl(36 30% 95%);border:1px solid hsl(30 15% 85%);border-radius:14px;padding:40px 32px;text-align:center;box-shadow:0 1px 3px rgba(20,16,12,.05)">
+      <p style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:hsl(20 8% 50%);margin:0 0 18px">Newsletter</p>
+      <h1 style="font-family:'Playfair Display',Georgia,serif;font-weight:600;font-size:26px;line-height:1.25;margin:0 0 14px;color:hsl(20 10% 15%)">${title}</h1>
+      <div style="font-size:16px;line-height:1.65;color:${accent}">${inner}</div>
     </main>
   </body>
 </html>`
