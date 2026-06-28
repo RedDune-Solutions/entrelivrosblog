@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const navLinks = [
   { label: "Início", path: "/" },
@@ -12,6 +13,14 @@ const navLinks = [
 
 const Navbar = () => {
   const pathname = usePathname();
+
+  // As páginas são estáticas/ISR. No render do servidor o usePathname vem a null,
+  // por isso TODOS os links saíam inativos no HTML — e o React, na hidratação,
+  // não corrige diferenças de className. Resultado: o realce nunca aparecia em
+  // produção. Calculamos o ativo só depois de montar no cliente, a partir do URL
+  // real, garantindo que reflete sempre a página atual.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
@@ -25,18 +34,18 @@ const Navbar = () => {
         {/* Links */}
         <div className="flex items-center gap-1">
           {navLinks.map((link) => {
-            const isActive = (() => {
-              if (!pathname) return false;
-              // Root must match exactly '/'
-              if (link.path === '/') return pathname === '/';
-              // A link is active if pathname equals the link path or is a nested route
-              return pathname === link.path || pathname.startsWith(`${link.path}/`);
-            })();
+            const isActive =
+              mounted &&
+              !!pathname &&
+              (link.path === "/"
+                ? pathname === "/"
+                : pathname === link.path || pathname.startsWith(`${link.path}/`));
 
             return (
               <Link
                 key={link.path}
                 href={link.path}
+                aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-4 py-1.5 font-body text-sm font-medium transition-colors
                   ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"}
                 `}
