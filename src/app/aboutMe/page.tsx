@@ -3,31 +3,31 @@ import Content from "@/components/AboutMe/Content";
 import Footer from "@/app/layout/Footer";
 import Navbar from "../layout/NavBar";
 import { createPublicClient } from "@/lib/supabase/public";
-import { BookReview } from "@/interface/book";
+import { withRetry } from "@/lib/retry";
 
 export const metadata: Metadata = {
   title: "Sobre Mim",
   description:
-    "Conhece a Tatiana Felicio, a leitora por detras do blog Entre Livros. Descobre a sua historia, os seus gostos literarios e o que a inspira.",
+    "Conhece a Tatiana Felício, a leitora por detrás do blog Entre Livros. Descobre a sua história, os seus gostos literários e o que a inspira.",
+  alternates: { canonical: "/aboutMe" },
 };
 
 export const revalidate = 3600;
 
-async function getBooks() : Promise<BookReview[]> {
-  // Never throw during prerender: if the client can't be built (missing env)
-  // or the query fails, degrade to empty stats instead of crashing the build.
+// Only `genre` is needed (count + favourite genre). Retry rides out transient
+// errors so we don't cache "0 livros" for an hour on a single hiccup.
+async function getGenres(): Promise<string[]> {
   try {
-    const supabase = createPublicClient()
-
-    const { data, error } = await supabase
-      .from('BookReview')
-      .select('*')
-      .order('reviewDate', { ascending: false })
-
-    if (error) console.error(error)
-    return data ?? []
+    return await withRetry(async () => {
+      const supabase = createPublicClient()
+      const { data, error } = await supabase
+        .from('BookReview')
+        .select('genre')
+      if (error) throw error
+      return (data ?? []).map((r) => r.genre as string)
+    })
   } catch (err) {
-    console.error('aboutMe getBooks failed:', err)
+    console.error('aboutMe getGenres failed:', err)
     return []
   }
 }
@@ -35,10 +35,10 @@ async function getBooks() : Promise<BookReview[]> {
 
 const About = async () => {
 
-  const livros = await getBooks();
-  const quantidadeDeLivros = livros.length;
-  const favCategory = livros.reduce((acc, livro) => {
-    acc[livro.genre] = (acc[livro.genre] || 0) + 1;
+  const genres = await getGenres();
+  const quantidadeDeLivros = genres.length;
+  const favCategory = genres.reduce((acc, genre) => {
+    acc[genre] = (acc[genre] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   const categoriaFavorita = Object.keys(favCategory).length > 0

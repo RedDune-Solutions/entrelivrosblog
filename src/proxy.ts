@@ -39,16 +39,20 @@ export async function proxy(request: NextRequest) {
   );
 
   // 2. VERIFICAR AUTENTICAÇÃO
+  // Uma sessão anónima (signInAnonymously, usada nos comentários) NÃO é a admin.
+  // Tratamos "autenticado" como conta real (não anónima).
   const { data: { user } } = await supabase.auth.getUser()
+  // Fail closed: require is_anonymous === false (real login). undefined/true → not admin.
+  const isAdmin = !!user && user.is_anonymous === false
 
   // 3. LÓGICA DE REDIRECIONAMENTO
-  // Se não houver utilizador e tentar aceder a uma página protegida (ex: /admin)
-  if (!user && request.nextUrl.pathname.startsWith('/admin')) {
+  // Se não houver admin e tentar aceder a uma página protegida (ex: /admin)
+  if (!isAdmin && request.nextUrl.pathname.startsWith('/admin')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Se o utilizador já estiver logado e tentar ir ao login, manda para a dashboard
-  if (user && request.nextUrl.pathname.startsWith('/login')) {
+  // Se a admin já estiver autenticada e tentar ir ao login, manda para a dashboard
+  if (isAdmin && request.nextUrl.pathname.startsWith('/login')) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
 

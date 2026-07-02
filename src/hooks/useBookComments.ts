@@ -9,6 +9,12 @@ export const useBookComments = (bookId: number) => {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchComments = async () => {
+    // No book selected (e.g. the always-mounted modal with book=null passes 0).
+    // Skip the pointless getBookComments(0) round-trip on every home load.
+    if (!bookId || bookId <= 0) {
+      setComments([]);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {

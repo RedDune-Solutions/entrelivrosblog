@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Mail } from "lucide-react";
 import { toast } from "sonner";
 import { subscribeNewsletter } from "@/app/newsletterActions";
@@ -33,11 +34,9 @@ const NewsletterForm = () => {
         return;
       }
 
-      if (result.alreadySubscribed) {
-        toast.info("Já estavas subscrito na newsletter.");
-      } else {
-        toast.success("Acabaste de subscrever a newsletter, obrigado!");
-      }
+      // Uniform message whether new or already-subscribed (privacy: don't
+      // reveal whether the address was already on the list).
+      toast.success("Obrigado! Se ainda não estavas, ficaste subscrito.");
 
       setEmail("");
       setConsent(false);
@@ -61,6 +60,9 @@ const NewsletterForm = () => {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
+        <label htmlFor="newsletter-email" className="sr-only">
+          Email
+        </label>
         <input
           id="newsletter-email"
           name="email"
@@ -92,7 +94,11 @@ const NewsletterForm = () => {
         />
         <span>
           Aceito receber emails do Entre Livros e que o meu email seja guardado
-          para esse fim. Posso cancelar a qualquer momento.
+          para esse fim. Posso cancelar a qualquer momento. Ver a{" "}
+          <Link href="/privacidade" className="underline hover:text-primary">
+            Política de Privacidade
+          </Link>
+          .
         </span>
       </label>
     </form>

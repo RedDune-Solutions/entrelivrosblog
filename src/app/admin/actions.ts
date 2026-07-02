@@ -3,14 +3,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth-guard'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import type { BookReview, BookComment } from '@/interface/book'
 import type { NewsletterSubscriber } from '@/interface/newsletter'
 import type { Suggestion } from '@/interface/suggestion'
 import { notifyNewContent } from '@/lib/email/notify'
-
-// || (not ??) so an empty-string env var falls back to the real domain.
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.entrelivrosblog.pt'
+import { SITE_URL } from '@/lib/site'
 
 export async function addBook(data: Omit<BookReview, 'id' | 'reviewDate'>) {
   const guard = await requireAdmin()
@@ -30,11 +28,15 @@ export async function addBook(data: Omit<BookReview, 'id' | 'reviewDate'>) {
   revalidatePath('/')
 
   if (inserted) {
-    await notifyNewContent({
-      table: 'BookReview',
-      id: inserted.id,
-      url: SITE_URL,
-    })
+    // Send after the response so the publish returns immediately (Vercel keeps
+    // the function alive via waitUntil). notifyNewContent guards on notified_at.
+    after(() =>
+      notifyNewContent({
+        table: 'BookReview',
+        id: inserted.id,
+        url: SITE_URL,
+      })
+    )
   }
 }
 
@@ -73,6 +75,9 @@ export async function deleteBook(id: number) {
 }
 
 export async function getBookCommentsForAdmin(bookId: number): Promise<BookComment[]> {
+  const guard = await requireAdmin()
+  if (!guard.ok) return []
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -112,6 +117,9 @@ export async function deleteBookComment(commentId: string) {
 
 // Conta comentários de TODOS os livros numa só query (evita 1 POST por linha).
 export async function getCommentCounts(): Promise<Record<number, number>> {
+  const guard = await requireAdmin()
+  if (!guard.ok) return {}
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -130,6 +138,9 @@ export async function getCommentCounts(): Promise<Record<number, number>> {
 }
 
 export async function countBookComments(bookId: number): Promise<number> {
+  const guard = await requireAdmin()
+  if (!guard.ok) return 0
+
   const supabase = await createClient()
 
   const { count, error } = await supabase
@@ -147,6 +158,9 @@ export async function countBookComments(bookId: number): Promise<number> {
 
 // Funções para o Centro de Notificações
 export async function getUnreadComments(): Promise<BookComment[]> {
+  const guard = await requireAdmin()
+  if (!guard.ok) return []
+
   const supabase = await createClient()
 
   // Primeiro buscamos os comentários não lidos
@@ -195,6 +209,9 @@ export async function getUnreadComments(): Promise<BookComment[]> {
 }
 
 export async function markCommentAsRead(commentId: string) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { success: false, error: guard.error }
+
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -212,6 +229,9 @@ export async function markCommentAsRead(commentId: string) {
 }
 
 export async function markAllCommentsAsRead() {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { success: false, error: guard.error }
+
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -289,6 +309,9 @@ export async function getSuggestions(): Promise<Suggestion[]> {
 }
 
 export async function getUnreadSuggestions(): Promise<Suggestion[]> {
+  const guard = await requireAdmin()
+  if (!guard.ok) return []
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -306,6 +329,9 @@ export async function getUnreadSuggestions(): Promise<Suggestion[]> {
 }
 
 export async function markSuggestionAsRead(id: string) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return { success: false, error: guard.error }
+
   const supabase = await createClient()
 
   const { error } = await supabase

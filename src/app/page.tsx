@@ -37,7 +37,9 @@ async function getLatestPosts(): Promise<PostWithBook[]> {
 
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        // Only the columns the cards use — never the full `body`, which would
+        // otherwise be serialized into the home page's RSC payload unused.
+        .select('id, slug, title, excerpt, coverImageUrl, bookId, published, publishedAt')
         .eq('published', true)
         .order('publishedAt', { ascending: false })
         .limit(10)
@@ -83,6 +85,10 @@ const Home = async () => {
   return (
     <div className="min-h-screen bg-background">
         <Navbar />
+
+        <h1 className="sr-only">
+          Entre Livros — recomendações e avaliações de livros por Tatiana Felício
+        </h1>
 
         <Hero />
 

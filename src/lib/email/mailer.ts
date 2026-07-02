@@ -23,6 +23,14 @@ const WELCOME_SUBJECT = 'Bem-vindo à newsletter do Entre Livros 📚'
 
 const CHUNK = 25
 
+// Avoid writing full subscriber e-mails (PII) into server logs. Keep just
+// enough to correlate a failure without persisting the address in clear.
+function maskEmail(email: string): string {
+  const [local = '', domain = ''] = email.split('@')
+  const head = local.slice(0, 1)
+  return `${head}***@${domain.slice(0, 1)}***`
+}
+
 /**
  * Builds the SMTP transport from env. Returns null when SMTP is not
  * configured so sending no-ops (logs) instead of throwing.
@@ -127,7 +135,7 @@ export async function sendNewContentEmail(
             },
           })
           .catch((err) =>
-            console.error(`SMTP send failed for ${s.email}:`, err)
+            console.error(`SMTP send failed for ${maskEmail(s.email)}:`, err)
           )
       })
     )
@@ -160,6 +168,6 @@ export async function sendWelcomeEmail(
       },
     })
   } catch (err) {
-    console.error(`Welcome email failed for ${subscriber.email}:`, err)
+    console.error(`Welcome email failed for ${maskEmail(subscriber.email)}:`, err)
   }
 }

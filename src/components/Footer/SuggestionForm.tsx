@@ -57,12 +57,17 @@ const SuggestionForm = () => {
       </div>
 
       <div className="rounded-md border border-border bg-card p-2">
+        <label htmlFor="suggestion-text" className="sr-only">
+          A tua sugestão
+        </label>
         <textarea
+          id="suggestion-text"
           value={text}
           onChange={handleChange}
           placeholder="A tua ideia, livro que queres ver, melhoria..."
           rows={3}
           disabled={isSubmitting}
+          aria-label="A tua sugestão"
           className="w-full resize-none rounded border-none bg-transparent font-body text-sm text-foreground placeholder-muted-foreground focus:outline-none"
         />
         <div className="mt-2 flex items-center justify-between">

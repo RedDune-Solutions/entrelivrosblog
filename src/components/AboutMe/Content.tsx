@@ -1,19 +1,15 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { BookOpen, Heart, Mail } from "lucide-react";
 import sobreMimImg from "../../../public/sobre-mim.jpg";
 import Image from "next/image";
+
+// Server component: the whole page ships visible in the static HTML. Fade is
+// CSS-only (see globals.css), so content is never invisible-until-hydration.
 const Content = ( { quantidadeDeLivros, categoriaFavorita }: { quantidadeDeLivros: number; categoriaFavorita: string } ) => {
-  
+
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+      <main id="main-content" className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+        <div className="animate-fade-up">
           <h1 className="font-display text-4xl font-bold text-foreground">
             Quem sou eu?
           </h1>
@@ -63,7 +59,7 @@ const Content = ( { quantidadeDeLivros, categoriaFavorita }: { quantidadeDeLivro
               <p className="font-body text-xs md:text-sm text-muted-foreground">tatilopesfelicio@hotmail.com</p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </main>
 
     </div>

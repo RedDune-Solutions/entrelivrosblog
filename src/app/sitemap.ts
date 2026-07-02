@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createPublicClient } from "@/lib/supabase/public";
+import { bookHref } from "@/lib/bookSlug";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -8,8 +10,7 @@ function publicClient() {
   return createPublicClient();
 }
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://entrelivros.vercel.app";
+const BASE_URL = SITE_URL;
 
 async function getPostEntries(): Promise<MetadataRoute.Sitemap> {
   try {
@@ -34,6 +35,28 @@ async function getPostEntries(): Promise<MetadataRoute.Sitemap> {
   }
 }
 
+async function getBookEntries(): Promise<MetadataRoute.Sitemap> {
+  try {
+    const supabase = publicClient();
+    const { data, error } = await supabase
+      .from("BookReview")
+      .select("id, title, reviewDate")
+      .order("reviewDate", { ascending: false });
+
+    if (error || !data) return [];
+
+    return data.map((b) => ({
+      url: `${BASE_URL}${bookHref(b as { id: number; title: string })}`,
+      lastModified: b.reviewDate ? new Date(b.reviewDate) : new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    }));
+  } catch (e) {
+    console.error("sitemap books fetch failed:", e);
+    return [];
+  }
+}
+
 async function getReviewLastModified(): Promise<Date> {
   try {
     const supabase = publicClient();
@@ -50,8 +73,9 @@ async function getReviewLastModified(): Promise<Date> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [postEntries, homeLastMod] = await Promise.all([
+  const [postEntries, bookEntries, homeLastMod] = await Promise.all([
     getPostEntries(),
+    getBookEntries(),
     getReviewLastModified(),
   ]);
 
@@ -74,6 +98,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    ...bookEntries,
     ...postEntries,
   ];
 }

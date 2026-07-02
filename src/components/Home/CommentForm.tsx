@@ -79,10 +79,15 @@ const CommentForm = ({ bookId, onCommentAdded }: CommentFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
       <div className="rounded-md border border-border/50 bg-card p-2">
+        <label htmlFor="comment-text" className="sr-only">
+          O teu comentário
+        </label>
         <textarea
+          id="comment-text"
           value={comment}
           onChange={handleChange}
           placeholder="Partilha a tua opinião sobre este livro..."
+          aria-label="O teu comentário"
           className="w-full resize-none rounded border-none bg-transparent font-body text-xs text-foreground placeholder-muted-foreground focus:outline-none"
           rows={3}
           disabled={isSubmitting}

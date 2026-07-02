@@ -3,12 +3,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth-guard'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import type { PostInput } from '@/interface/post'
 import { notifyNewContent } from '@/lib/email/notify'
-
-// || (not ??) so an empty-string env var falls back to the real domain.
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.entrelivrosblog.pt'
+import { SITE_URL } from '@/lib/site'
 
 function slugify(str: string) {
   return str
@@ -66,11 +64,13 @@ export async function addPost(data: Omit<PostInput, 'slug' | 'publishedAt'> & { 
   revalidateAll(slug)
 
   if (payload.published && inserted) {
-    await notifyNewContent({
-      table: 'posts',
-      id: inserted.id,
-      url: `${SITE_URL}/posts/${slug}`,
-    })
+    after(() =>
+      notifyNewContent({
+        table: 'posts',
+        id: inserted.id,
+        url: `${SITE_URL}/posts/${slug}`,
+      })
+    )
   }
 
   return { slug }
@@ -101,11 +101,13 @@ export async function updatePost(
   // First time a post becomes published, announce it. notifyNewContent
   // guards on notified_at, so re-saving an already-announced post is a no-op.
   if (data.published) {
-    await notifyNewContent({
-      table: 'posts',
-      id,
-      url: `${SITE_URL}/posts/${slug}`,
-    })
+    after(() =>
+      notifyNewContent({
+        table: 'posts',
+        id,
+        url: `${SITE_URL}/posts/${slug}`,
+      })
+    )
   }
 
   return { slug }

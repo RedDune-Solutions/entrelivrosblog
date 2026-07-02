@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, BookOpen, ChevronDown } from "lucide-react";
+import { Heart, BookOpen, ChevronDown, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import StarRating from "../../app/layout/StarRating";
 import type { BookReview } from "@/interface/book";
 import Image from "next/image";
 import CommentsSection from "./CommentsSection";
 import { useBookComments } from "@/hooks/useBookComments";
+import { bookHref } from "@/lib/bookSlug";
 
 interface BookDetailModalProps {
   book: BookReview | null;
@@ -93,6 +95,13 @@ const BookDetailModal = ({ book, open, onOpenChange }: BookDetailModalProps) => 
                     <p className="font-body text-sm leading-relaxed text-foreground/90">
                       {book.fullReview}
                     </p>
+                    <Link
+                      href={bookHref(book)}
+                      className="mt-3 inline-flex items-center gap-1 font-body text-xs font-medium text-primary hover:underline"
+                    >
+                      Abrir página da avaliação
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </Link>
                   </div>
                 )}
               </div>

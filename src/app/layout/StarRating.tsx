@@ -7,10 +7,15 @@ interface StarRatingProps {
 
 const StarRating = ({ rating, max = 5 }: StarRatingProps) => {
   return (
-    <div className="flex gap-0.5">
+    <div
+      className="flex gap-0.5"
+      role="img"
+      aria-label={`Avaliação: ${rating} de ${max} estrelas`}
+    >
       {Array.from({ length: max }, (_, i) => (
         <Star
           key={i}
+          aria-hidden="true"
           className={`h-4 w-4 ${
             i < rating
               ? "fill-star-filled text-star-filled"

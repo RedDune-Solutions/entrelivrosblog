@@ -20,10 +20,15 @@ const BookCard = ({ book, index, onSelect, isExpanded, onToggle }: BookCardProps
       <motion.article
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
+        // Cap the stagger so a large catalogue doesn't leave the last cards
+        // invisible for seconds after hydration.
+        transition={{ duration: 0.5, delay: Math.min(index, 6) * 0.08 }}
         className={`group flex flex-col cursor-pointer rounded-lg bg-card p-5 shadow-sm border border-border/50 absolute top-0 left-0 w-full h-fit hover:overflow-hidden ${isExpanded ? "z-20 shadow-xl border-primary/30 " : "z-10 hover:z-20"} transition-all duration-300 hover:shadow-xl`}
         onClick={() => onSelect(book)}
         onKeyDown={(e) => {
+          // Only act when the card itself is focused — never steal Enter/Space
+          // from the inner "expandir sinopse" button.
+          if (e.target !== e.currentTarget) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onSelect(book);
@@ -31,7 +36,7 @@ const BookCard = ({ book, index, onSelect, isExpanded, onToggle }: BookCardProps
         }}
         role="button"
         tabIndex={0}
-        aria-label={`Ver detalhes de ${book.title} por ${book.author}`}
+        aria-label={`Ver avaliação de ${book.title} por ${book.author}, ${book.rating} de 5 estrelas`}
       >
         <div className="flex gap-5">
           <div className="w-24 shrink-0 overflow-hidden rounded-md">
@@ -86,6 +91,7 @@ const BookCard = ({ book, index, onSelect, isExpanded, onToggle }: BookCardProps
                 e.stopPropagation();
                 onToggle();
               }}
+              onKeyDown={(e) => e.stopPropagation()}
               aria-expanded={isExpanded}
               aria-label={isExpanded ? "Recolher sinopse" : "Expandir sinopse"}
               className="sm:hidden flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 font-body text-xs font-medium text-primary hover:bg-accent transition-colors"

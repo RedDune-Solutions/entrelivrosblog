@@ -8,7 +8,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function subscribeNewsletter(
   email: string
-): Promise<{ success: boolean; error?: string; alreadySubscribed?: boolean }> {
+): Promise<{ success: boolean; error?: string }> {
   const ip = await getRequestIp()
   const rl = await rateLimitDistributed(`newsletter:${ip}`, 5, 10 * 60 * 1000)
   if (!rl.allowed) {
@@ -38,9 +38,11 @@ export async function subscribeNewsletter(
     })
 
   if (error) {
-    // 23505 = unique_violation (already subscribed)
+    // 23505 = unique_violation (already subscribed). Respond identically to a
+    // fresh subscription so the form can't be used to probe whether a given
+    // e-mail is already on the list (membership enumeration).
     if (error.code === '23505') {
-      return { success: true, alreadySubscribed: true }
+      return { success: true }
     }
     console.error('Error subscribing to newsletter:', error)
     return { success: false, error: 'Não foi possível subscrever' }
